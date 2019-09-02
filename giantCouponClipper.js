@@ -1,115 +1,76 @@
+/*
+    Giant Coupon Clipper
+    Lucas Soohoo, Fall 2019
 
+    Giant Coupon Clipper helps users clip digital coupons on Giant Food's website
+    (https://giantfood.com/coupons-weekly-circular/digital-coupons/#/available).
+    This program loads the coupons by sending an HTTP-PUT request that is sent
+    when the user clicks on the "Load To Card" button.
+*/
 
-//get the HTML for all buttons items
+// Get the HTML for all buttons
 var allRedButtons = document.getElementsByClassName("c-coupon__button a-button -red -grows -full-width js-load-to-card js-coremetrics-location");
 
-for (button of allRedButtons){
+// Extract user's access token
+// document.cookie has the access token and the variable looks something like this: (...  718.0000; OAUTH_access_token=1a23456bcdefgh  ...  7890ab123c4d; OAUTH_expires_in=Mon,  ...)
+let authStart = document.cookie.indexOf("OAUTH_access_token=") + 19;
+let authEnd = document.cookie.indexOf("; OAUTH_expires_in=");
+var authToken = document.cookie.substring(authStart, authEnd);
 
-    // GET THE OFFER ID ==============
-
-        // get the offer text (something like "SAVE $1.00, on any ONE (1) 1lb package of Zespri SunGold© Kiwifruit, 5d7aad87-3c8d-449a-8bcf-b04c013c2b89")
-    var offerText = button.getAttribute("data-coremetrics-coupon-name");
-
-        // break text into array
-    var offerTextArray = offerText.split(", ")
-        //id code will be last in the array
-    var offerId = offerTextArray[offerTextArray.length-1];
+/* Tell the user to wait and that the program is running
+   There are typically (150-300) coupons. We'll add a minimum 2 second buffer.
+   We also have a bit of time before the user refreshes the page   */
+let delayLength = allRedButtons.length * 15 + 2000;
+alert(`"Giant Coupon Clipper" is ${allRedButtons.length} coupons. Please wait for ${Math.round(delayLength/1000)} seconds.`);
 
 
-    // SEND HTTP PUT REQUEST (EMULATE BUTTON CLICK) ==============
+for (button of allRedButtons) {
 
-    var xhr = new XMLHttpRequest();
+    // ============== FIND THE OFFER ID ==============
 
-    xhr.open("PUT", 'https://giantfood.com/auth/api/private/synergy/coupons/offers/440017351106', true);
+    // Get the offer text (something like "SAVE $1.00, on any ONE (1) package of ..., 5d7aad87-3c8d-449a-8bcf-b04c013c2b89")
+    let offerText = button.getAttribute("data-coremetrics-coupon-name");
+
+    // Break text into array
+    let offerTextArray = offerText.split(", ")
+    // offer code id will be last in the array
+    let offerId = offerTextArray[offerTextArray.length - 1];
+
+
+    // ============== SEND HTTP-PUT REQUEST (EMULATE BUTTON CLICK) ==============
+
+    let xhr = new XMLHttpRequest();
+
+    /*  There are 2 types of things to click: Coupons and Offers
+        To tell the difference, Coupons have a hyphen in the offer id (Ex: d236370f-5170-4045-97f5-edbe83396b75) while Offers do not (Ex: 1484198)
+        Coupons and Offers require different links to PUT to
+        Offers also require ` "loadToCard":true ` in the request body   */
+
+    let contentBody;
+    if (offerId.includes("-")) {
+        //Is a coupon
+        xhr.open("PUT", 'https://giantfood.com/auth/api/private/synergy/coupons/offers/440017351106', true);
+        contentBody = '{"offerNumber":"' + offerId + '"}';
+    } else {
+        // Is an offer
+
+        // TODO: Still seems to be getting a 400 error. Something is still incorrect
+
+        xhr.open("PUT", 'https://giantfood.com/auth/api/private/synergy/offers/440017351106', true);
+        contentBody = '{"offerNumber":"' + offerId + ', "loadToCard":true"}';
+    }
 
     xhr.withCredentials = true;
 
-
-    // token with junk after it ( something like "07d..token...21b7; OAUTH_expires_in=Mon, 12 A")
-    var authToken = document.cookie.split("OAUTH_access_token=")[1];
-    authToken = authToken.split(";")[0];
-
-    //Send the proper header information along with the request
+    // Send the proper header info along with the request
     xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader("Authorization","Bearer "+authToken);
+    xhr.setRequestHeader("Authorization", "Bearer " + authToken);
 
-    var contentBody = '{"offerNumber":"'+offerId+'"}'; //,"loadToCard":true
+    // Send the HTTP-PUT request
     xhr.send(contentBody);
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-//  alternate way of getting offer id
-//
-// var li = document.getElementsByClassName("l-coupons__item no-tap-highlight")
-// for(button of li){
-//     console.log(button.childNodes[0]);
-//
-// }
-//
-
-
-
-
-
-
-//
-//
-// let header = {
-//
-// "Host": "giantfood.com",
-// "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0",
-// "Accept": "text/plain, */*; q=0.01",
-// "Accept-Language": "en-US,en;q=0.5",
-// "Accept-Encoding": "gzip, deflate, br",
-// "Referer": "https://giantfood.com/coupons-weekly-circular/digital-coupons/",
-// "Content-Type": "application/json",
-// "Authorization": "Bearer ",
-// "X-Requested-With": "XMLHttpRequest",
-// "Content-Length": "54",
-// "DNT": "1",
-// "Connection": "keep-alive",
-// "Cookie": "",
-// "TE": "Trailers"
-// }
-//
-//
-//     var xhr = new XMLHttpRequest();
-//
-//     xhr.open("PUT", 'https://giantfood.com/auth/api/private/synergy/coupons/offers/440017351106', true);
-//
-//     xhr.withCredentials = true;
-//
-//     //Send the proper header information along with the request
-//     // xhr.setRequestHeader(header);
-//     // xhr.setRequestHeader("Host", "giantfood.com");
-//     // xhr.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0");
-//     // xhr.setRequestHeader("Accept", "text/plain, */*; q=0.01");
-//     // xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
-//     // xhr.setRequestHeader("Accept-Encoding", "gzip, deflate, br");
-//     // xhr.setRequestHeader("Referer", "https://giantfood.com/coupons-weekly-circular/digital-coupons/");
-//     xhr.setRequestHeader("Content-Type", "application/json");
-//     // xhr.setRequestHeader("Authorization", "Bearer ");
-//     // xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-//     // xhr.setRequestHeader("Content-Length", "54");
-//     // xhr.setRequestHeader("DNT", "1");
-//     // xhr.setRequestHeader("Connection", "keep-alive");
-//     // xhr.setRequestHeader("Cookie", "");
-//     // xhr.setRequestHeader("TE", "Trailers");
-//
-//     xhr.setRequestHeader("Authorization","Bearer ");
-//     // xhr.setRequestHeader("OAUTH_expires_in", "Sun, 11 Aug 2019 15:38:06 UTC");
-//
-//
-//     xhr.send('{"offerNumber":"a75b0285-381c-4639-ac76-098829a5e043"}');
+setTimeout(function() {
+    alert('"Giant Coupon Clipper" has completed. Please refresh the page (F5) and check for remaining coupons.');
+}, delayLength);
