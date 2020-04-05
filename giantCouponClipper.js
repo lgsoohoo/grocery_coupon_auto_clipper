@@ -8,8 +8,11 @@
     when the user clicks on the "Load To Card" button.
 */
 
-// Get the HTML for all buttons
-var allRedButtons = document.getElementsByClassName("c-coupon__button a-button -red -grows -full-width js-load-to-card js-coremetrics-location");
+// Get the HTML for all unloaded (not yet clicked) buttons
+// HTML list with unloaded coupons (includes pictures, text of items)
+let availableList = document.getElementById("coupons-app-available-coupons");
+// Extract just the buttons from the list
+var allRedButtons = availableList.getElementsByClassName("c-coupon__button a-button -red -grows -full-width js-load-to-card js-coremetrics-location");
 
 // Extract user's access token
 // document.cookie has the access token and the variable looks something like this: (...  718.0000; OAUTH_access_token=1a23456bcdefgh  ...  7890ab123c4d; OAUTH_expires_in=Mon,  ...)
@@ -23,6 +26,7 @@ var authToken = document.cookie.substring(authStart, authEnd);
 let delayLength = allRedButtons.length * 15 + 2000;
 alert(`"Giant Coupon Clipper" is ${allRedButtons.length} coupons. Please wait for ${Math.round(delayLength/1000)} seconds.`);
 
+var numCoupons = allRedButtons.length;
 
 for (button of allRedButtons) {
 
@@ -48,7 +52,7 @@ for (button of allRedButtons) {
 
     let contentBody;
     if (offerId.includes("-")) {
-        //Is a coupon
+        // Is a coupon
         xhr.open("PUT", 'https://giantfood.com/auth/api/private/synergy/coupons/offers/440017351106', true);
         contentBody = '{"offerNumber":"' + offerId + '"}';
     } else {
@@ -58,6 +62,8 @@ for (button of allRedButtons) {
 
         xhr.open("PUT", 'https://giantfood.com/auth/api/private/synergy/offers/440017351106', true);
         contentBody = '{"offerNumber":"' + offerId + ', "loadToCard":true"}';
+        xhr.setRequestHeader("TE", "Trailers");
+
     }
 
     xhr.withCredentials = true;
@@ -66,11 +72,17 @@ for (button of allRedButtons) {
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.setRequestHeader("Authorization", "Bearer " + authToken);
 
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            numCoupons--;
+            if (numCoupons <= 0) {
+                alert('"Giant Coupon Clipper" has completed. Please refresh the page (F5) and check for remaining coupons.');
+            }
+
+        }
+    }
+
     // Send the HTTP-PUT request
     xhr.send(contentBody);
 
 }
-
-setTimeout(function() {
-    alert('"Giant Coupon Clipper" has completed. Please refresh the page (F5) and check for remaining coupons.');
-}, delayLength);
