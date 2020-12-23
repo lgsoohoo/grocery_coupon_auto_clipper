@@ -3,86 +3,55 @@
     Lucas Soohoo, Fall 2019
 
     Giant Coupon Clipper helps users clip digital coupons on Giant Food's website
-    (https://giantfood.com/coupons-weekly-circular/digital-coupons/#/available).
-    This program loads the coupons by sending an HTTP-PUT request that is sent
-    when the user clicks on the "Load To Card" button.
+    (https://giantfood.com/savings/coupons/browse).
+    This program loads the coupons by sending an HTTP-POST request that is similar
+    to when the user clicks on the buttons.
 */
 
-// Get the HTML for all unloaded (not yet clicked) buttons
-// HTML list with unloaded coupons (includes pictures, text of items)
-let availableList = document.getElementById("coupons-app-available-coupons");
-// Extract just the buttons from the list
-var allRedButtons = availableList.getElementsByClassName("c-coupon__button a-button -red -grows -full-width js-load-to-card js-coremetrics-location");
+// ========== Get User Id ==========
+// Might be stored somewhere locally but we'll just get it from the server.
+let profileRequest = new XMLHttpRequest();
+profileRequest.open("GET", "https://giantfood.com/api/v3.0/user/profile", false);
+profileRequest.send();
 
-// Extract user's access token
-// document.cookie has the access token and the variable looks something like this: (...  718.0000; OAUTH_access_token=1a23456bcdefgh  ...  7890ab123c4d; OAUTH_expires_in=Mon,  ...)
-let authStart = document.cookie.indexOf("OAUTH_access_token=") + 19;
-let authEnd = document.cookie.indexOf("; OAUTH_expires_in=");
-var authToken = document.cookie.substring(authStart, authEnd);
+let userId = profileRequest.responseText;
+//TODO - is responseText guaranteed to get a string? (Ever null?)
+let startIndex = userId.indexOf("\"userId\":")+9;
+let endIndex = userId.indexOf(",\"currentOrderId\":");
+userId = userId.substring(startIndex,endIndex);
 
-/* Tell the user to wait and that the program is running
-   There are typically (150-300) coupons. We'll add a minimum 2 second buffer.
-   We also have a bit of time before the user refreshes the page   */
-let delayLength = allRedButtons.length * 15 + 2000;
-alert(`"Giant Coupon Clipper" is ${allRedButtons.length} coupons. Please wait for ${Math.round(delayLength/1000)} seconds.`);
+// ========== Check if we got the User Id properly ==========
+if(profileRequest.status != 200 || !Number.isInteger(Number(userId))){
+    alert("Failed getting user id");
+}else{
 
-var numCoupons = allRedButtons.length;
+    // ========== Get the HTML for all unloaded coupons ==========
+    // HTML (ul) list with coupons (includes pictures, descriptions)
+    // [0] is the unloaded coupons, [1] is the already loaded ones
+    let availableList = document.getElementsByClassName("coupon-general-offers-wrapper_group")[0];
+    // Extract the coupons into an HTML Collection (think array)
+    var allCoupons = availableList.getElementsByTagName("li");
+        
+    alert(`"Grocery Coupon Auto Clipper" is clipping ${allCoupons.length} coupons. Please press 'OK' and wait for GCAC to finish before refreshing the page.`);
 
-for (button of allRedButtons) {
+    for (coupon of allCoupons) {
 
-    // ============== FIND THE OFFER ID ==============
+        // Coupon Offer Id is the HTML element's id
+        let offerId = coupon.id;
 
-    // Get the offer text (something like "SAVE $1.00, on any ONE (1) package of ..., 5d7aad87-3c8d-449a-8bcf-b04c013c2b89")
-    let offerText = button.getAttribute("data-coremetrics-coupon-name");
+        // ============== Send HTTP-POST request (emulate button press) ==============
 
-    // Break text into array
-    let offerTextArray = offerText.split(", ")
-    // offer code id will be last in the array
-    let offerId = offerTextArray[offerTextArray.length - 1];
+        let xhr = new XMLHttpRequest();       
 
+        xhr.open("POST", `https://giantfood.com/api/v4.0/users/${userId}/coupons/clipped`, false);  // false makes the request synchronous
+        let contentBody = "{\"couponId\":\""+offerId+"\"}";
 
-    // ============== SEND HTTP-PUT REQUEST (EMULATE BUTTON CLICK) ==============
+        xhr.withCredentials = true;
+        xhr.setRequestHeader("Content-Type", "application/json");
 
-    let xhr = new XMLHttpRequest();
-
-    /*  There are 2 types of things to click: Coupons and Offers
-        To tell the difference, Coupons have a hyphen in the offer id (Ex: d236370f-5170-4045-97f5-edbe83396b75) while Offers do not (Ex: 1484198)
-        Coupons and Offers require different links to PUT to
-        Offers also require ` "loadToCard":true ` in the request body   */
-
-    let contentBody;
-    if (offerId.includes("-")) {
-        // Is a coupon
-        xhr.open("PUT", 'https://giantfood.com/auth/api/private/synergy/coupons/offers/440017351106', true);
-        contentBody = '{"offerNumber":"' + offerId + '"}';
-    } else {
-        // Is an offer
-
-        // TODO: Still seems to be getting a 400 error. Something is still incorrect
-
-        xhr.open("PUT", 'https://giantfood.com/auth/api/private/synergy/offers/440017351106', true);
-        contentBody = '{"offerNumber":"' + offerId + ', "loadToCard":true"}';
-        xhr.setRequestHeader("TE", "Trailers");
-
+        xhr.send(contentBody);
     }
-
-    xhr.withCredentials = true;
-
-    // Send the proper header info along with the request
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader("Authorization", "Bearer " + authToken);
-
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            numCoupons--;
-            if (numCoupons <= 0) {
-                alert('"Giant Coupon Clipper" has completed. Please refresh the page (F5) and check for remaining coupons.');
-            }
-
-        }
-    }
-
-    // Send the HTTP-PUT request
-    xhr.send(contentBody);
-
+  
+    alert('"Grocery Coupon Auto Clipper" has completed. Please refresh the page (F5) and check for remaining coupons.');
+    
 }
