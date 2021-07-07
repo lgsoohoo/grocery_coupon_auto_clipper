@@ -31,38 +31,43 @@ if(document.URL !== "https://giantfood.com/savings/coupons/browse"){
     // ========== Check if we got the User Id properly ==========
     if(typeof userId != 'string' || profileRequest.status != 200 || !Number.isInteger(Number(userId)) || userId == "2"){
         // Failed getting user profile appears to return '2'
-        alert("Failed getting user id. Please log in or try again later.");
+        alert(`"Grocery Coupon Auto Clipper" failed getting user id. Please log in or try again later.`);
     }else{
 
         // ========== Get the HTML for all unloaded coupons ==========
         // HTML (ul) list with coupons (includes pictures, descriptions)
         // [0] is the unloaded coupons, [1] is the already loaded ones
-        let availableList = document.getElementsByClassName("coupon-general-offers-wrapper_group")[0];
+        let availableList = document.getElementsByClassName("tile-list")[0];
         // Extract the coupons into an HTML Collection (think array)
         var allCoupons = availableList.getElementsByTagName("li");
-            
-        alert(`"Grocery Coupon Auto Clipper" is clipping ${allCoupons.length} coupons. Please press 'OK' and wait for GCAC to finish.`);
+        
+        if(allCoupons.length == 0){
+            alert(`"Grocery Coupon Auto Clipper" did not find any coupons to clip.`);    
+        }else{       
+            alert(`"Grocery Coupon Auto Clipper" is clipping ${allCoupons.length} coupons. Please wait for another dialogue box to appear before refreshing the page.`);
 
-        for (coupon of allCoupons) {
+            for (coupon of allCoupons) {
 
-            // Coupon Offer Id is the HTML element's id
-            let offerId = coupon.id;
+                // Coupon Offer Id is the HTML element's id
+                let offerId = coupon.id;
 
-            // ============== Send HTTP-POST request (emulate button press) ==============
+                // ============== Send HTTP-POST request (emulate button press) ==============
 
-            let xhr = new XMLHttpRequest();       
+                let xhr = new XMLHttpRequest();       
 
-            xhr.open("POST", `https://giantfood.com/api/v4.0/users/${userId}/coupons/clipped`, false);  // false makes the request synchronous
-            let contentBody = "{\"couponId\":\""+offerId+"\"}";
+                xhr.open("POST", `https://giantfood.com/api/v4.0/users/${userId}/coupons/clipped`, false);
+                // `false` makes the request synchronous
+                let contentBody = "{\"couponId\":\""+offerId+"\"}";
 
-            xhr.withCredentials = true;
-            xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.withCredentials = true;
+                xhr.setRequestHeader("Content-Type", "application/json");
 
-            xhr.send(contentBody);
+                xhr.send(contentBody);
+            }
+        
+            alert('"Grocery Coupon Auto Clipper" has completed clipping coupons. Press "OK" to refresh the page.');
+            window.location.reload();
         }
-    
-        alert('"Grocery Coupon Auto Clipper" has completed. The webpage will now refresh.');
-        window.location.reload();
         
     }
 }
