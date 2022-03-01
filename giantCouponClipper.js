@@ -40,34 +40,59 @@ if(document.URL !== "https://giantfood.com/savings/coupons/browse"){
         let availableList = document.getElementsByClassName("tile-list")[0];
         // Extract the coupons into an HTML Collection (think array)
         var allCoupons = availableList.getElementsByTagName("li");
-        
+
         if(allCoupons.length == 0){
-            alert(`"Grocery Coupon Auto Clipper" did not find any coupons to clip.`);    
-        }else{       
-            alert(`"Grocery Coupon Auto Clipper" is clipping ${allCoupons.length} coupons. Please wait for another dialogue box to appear before refreshing the page.`);
+            alert(`"Grocery Coupon Auto Clipper" did not find any coupons to clip.`);
+        }else{
+            alert(`"Grocery Coupon Auto Clipper" is clipping ${allCoupons.length} coupons. Please wait ...`);
+
+            let couponPromises = [];
 
             for (coupon of allCoupons) {
 
                 // Coupon Offer Id is the HTML element's id
                 let offerId = coupon.id;
-
+                
                 // ============== Send HTTP-POST request (emulate button press) ==============
 
-                let xhr = new XMLHttpRequest();       
-
-                xhr.open("POST", `https://giantfood.com/api/v4.0/users/${userId}/coupons/clipped`, false);
-                // `false` makes the request synchronous
                 let contentBody = "{\"couponId\":\""+offerId+"\"}";
 
-                xhr.withCredentials = true;
-                xhr.setRequestHeader("Content-Type", "application/json");
+                let fetchRequest = new Request(`https://giantfood.com/api/v4.0/users/${userId}/coupons/clipped`,{
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // credentials: "same-origin"
+                    body: contentBody
+                });
 
-                xhr.send(contentBody);
+                let pushClipButton = fetch(fetchRequest).then((res)=>{
+                    return res.json()
+                })
+                //.then((res)=>{
+                    // Do something when each coupon has finished clipping
+                    // console.log(res);
+                    /**
+                     * The response object looks like this:
+                     * {
+                     *   "response": {
+                     *     "result": "SUCCESS"
+                     *   },
+                     *   "sessionId": "SOME ID HERE"
+                     * }
+                     */   
+                //});
+                ;
+
+                couponPromises.push(pushClipButton);
             }
-        
-            alert('"Grocery Coupon Auto Clipper" has completed clipping coupons. Press "OK" to refresh the page.');
-            window.location.reload();
+
+            Promise.all(couponPromises).then(()=>{
+                // TODO: If the coupon fails to clip (like if we've already clipped it) then the code gets stuck and never hits this
+                alert('"Grocery Coupon Auto Clipper" has completed clipping coupons. Press "OK" to refresh the page.');
+                window.location.reload();
+            });
         }
-        
+
     }
 }
