@@ -11,7 +11,8 @@
 // Make sure we are actually on Giant's website
 if (document.URL !== "https://giantfood.com/savings/coupons/browse") {
     alert(
-        `"Grocery Coupon Auto Clipper" must be on Giant's website to work.\n Please visit https://giantfood.com/savings/coupons/browse, log in, and try again.`
+        `"Grocery Coupon Auto Clipper" must be on Giant's website to work.` +
+            `\nPlease visit https://giantfood.com/savings/coupons/browse, log in, and try again.`
     );
 } else {
     // ========== Get User Id ==========
@@ -112,9 +113,11 @@ if (document.URL !== "https://giantfood.com/savings/coupons/browse") {
             }
 
             Promise.all(couponPromises).then(() => {
-                // TODO: If the coupon fails to clip (like if we've already clipped it) then the code gets stuck and never hits this
+                // TODO: If the coupon fails to clip (like if we've already clipped it)
+                // then the code gets stuck and never hits this
                 alert(
-                    '"Grocery Coupon Auto Clipper" has completed clipping coupons. Press "OK" to refresh the page.'
+                    '"Grocery Coupon Auto Clipper" has completed clipping coupons.' +
+                        ' Press "OK" to refresh the page.'
                 );
                 window.location.reload();
             });
