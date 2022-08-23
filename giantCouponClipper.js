@@ -47,8 +47,11 @@ if(document.URL !== "https://giantfood.com/savings/coupons/browse"){
             alert(`"Grocery Coupon Auto Clipper" is clipping ${allCoupons.length} coupons. Please wait ...`);
 
             let couponPromises = [];
-
             for (coupon of allCoupons) {
+                // Skip the item if it's not actually a coupon
+                if (coupon.innerHTML.indexOf("Shop Now") !== -1){
+                    continue; 
+                }
 
                 // Coupon Offer Id is the HTML element's id
                 let offerId = coupon.id;
@@ -66,25 +69,29 @@ if(document.URL !== "https://giantfood.com/savings/coupons/browse"){
                     body: contentBody
                 });
 
-                let pushClipButton = fetch(fetchRequest).then((res)=>{
-                    return res.json()
-                })
-                //.then((res)=>{
-                    // Do something when each coupon has finished clipping
-                    // console.log(res);
-                    /**
-                     * The response object looks like this:
-                     * {
-                     *   "response": {
-                     *     "result": "SUCCESS"
-                     *   },
-                     *   "sessionId": "SOME ID HERE"
-                     * }
-                     */   
-                //});
-                ;
-
-                couponPromises.push(pushClipButton);
+                let pushClipButton = fetch(fetchRequest)
+                    // // If we want to do something with the response
+                    // // Sometimes we seem to get stuck though
+                    .then(res=>{
+                        if(Object.prototype.hasOwnProperty.call(res, "json")){
+                            return res.json();
+                        }
+                        return "Done";
+                    })
+                    // .then(jsonData=>{
+                    //     /**
+                    //      * The response object should looks like this:
+                    //      * {
+                    //      *   "response": {
+                    //      *     "result": "SUCCESS"
+                    //      *   },
+                    //      *   "sessionId": "SOME ID HERE"
+                    //      * }
+                    //      */   
+                    //     console.log(jsonData);
+                    // })
+                    ;
+                    couponPromises.push(pushClipButton);
             }
 
             Promise.all(couponPromises).then(()=>{
@@ -93,6 +100,5 @@ if(document.URL !== "https://giantfood.com/savings/coupons/browse"){
                 window.location.reload();
             });
         }
-
     }
 }
