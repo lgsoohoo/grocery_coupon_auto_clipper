@@ -58,7 +58,7 @@ if (document.URL !== "https://giantfood.com/savings/coupons/browse") {
                 `"Grocery Coupon Auto Clipper" did not find any coupons to clip.`
             );
         } else {
-            alert(
+            console.log(
                 `"Grocery Coupon Auto Clipper" is clipping ${allCoupons.length} coupons. Please wait ...`
             );
 
@@ -115,10 +115,6 @@ if (document.URL !== "https://giantfood.com/savings/coupons/browse") {
             Promise.all(couponPromises).then(() => {
                 // TODO: If the coupon fails to clip (like if we've already clipped it)
                 // then the code gets stuck and never hits this
-                alert(
-                    '"Grocery Coupon Auto Clipper" has completed clipping coupons.' +
-                        ' Press "OK" to refresh the page.'
-                );
                 window.location.reload();
             });
         }
