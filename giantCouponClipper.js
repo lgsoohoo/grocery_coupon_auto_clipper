@@ -9,6 +9,7 @@
 */
 
 // Make sure we are actually on Giant's website
+// TODO: doesn't have to be this exact URL if we could use the API to pull the list of coupons
 if (document.URL !== "https://giantfood.com/savings/coupons/browse") {
     alert(
         `"Grocery Coupon Auto Clipper" must be on Giant's website to work.` +
@@ -21,22 +22,17 @@ if (document.URL !== "https://giantfood.com/savings/coupons/browse") {
     let profileRequest = new XMLHttpRequest();
     profileRequest.open(
         "GET",
-        "https://giantfood.com/api/v3.0/user/profile",
+        "https://giantfood.com/api/v1.0/current/user",
         false
     );
     profileRequest.send();
 
-    let userId = profileRequest.responseText;
-    if (typeof userId == "string") {
-        //TODO: is responseText guaranteed to get a string? (Ever null/something odd?)
-        let startIndex = userId.indexOf('"userId":') + 9;
-        let endIndex = userId.indexOf(',"currentOrderId":');
-        userId = userId.substring(startIndex, endIndex);
-    }
+    let userId = Number(JSON.parse(profileRequest.responseText).userId);
+    // TODO: Put JSON.parse in a try-catch
 
     // ========== Check if we got the User Id properly ==========
     if (
-        typeof userId != "string" ||
+        typeof userId != "number" ||
         profileRequest.status != 200 ||
         !Number.isInteger(Number(userId)) ||
         userId == "2"
@@ -74,10 +70,10 @@ if (document.URL !== "https://giantfood.com/savings/coupons/browse") {
 
                 // ============== Send HTTP-POST request (emulate button press) ==============
 
-                let contentBody = '{"couponId":"' + offerId + '"}';
+                let contentBody = `{"couponId":"${offerId}"}`;
 
                 let fetchRequest = new Request(
-                    `https://giantfood.com/api/v4.0/users/${userId}/coupons/clipped`,
+                    `https://giantfood.com/api/v6.0/users/${userId}/coupons/clipped`,
                     {
                         method: "POST",
                         headers: {
@@ -87,6 +83,8 @@ if (document.URL !== "https://giantfood.com/savings/coupons/browse") {
                         body: contentBody,
                     }
                 );
+
+                // TODO: Give a small delay before each button press
 
                 let pushClipButton = fetch(fetchRequest)
                     // // If we want to do something with the response
