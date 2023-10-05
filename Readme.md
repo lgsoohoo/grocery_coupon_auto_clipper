@@ -4,8 +4,7 @@
 
 Some grocery stores have virtual coupons for members to "clip". However, clicking on every single button can be time-consuming and annoying. This bookmarklet (JavaScript code) allows you to automate the process, "clipping" all the coupons in one click!
 
-If you would like to create the bookmarklet yourself, remove all the comments from the JavaScript code and you can use [Mr. Cole's Bookmarklet Creator](https://mrcoles.com/bookmarklet/) to generate the bookmarklet. 
-
+If you would like to create the bookmarklet yourself, remove all the comments from the JavaScript code and you can use [Mr. Cole's Bookmarklet Creator](https://mrcoles.com/bookmarklet/) to generate the bookmarklet. Note: You'll need to make the bookmarklet function `async`, by changing the beginning from `javascript:(function()` to `javascript:(async function()`.
 
 ## How to use it
 
@@ -23,3 +22,7 @@ If you would like to create the bookmarklet yourself, remove all the comments fr
 ## "Giant Food" Grocery Coupon Auto Clipper
 
 Giant Food's coupon page can be found at [https://giantfood.com/savings/coupons/browse](https://giantfood.com/savings/coupons/browse).
+
+## Safeway
+
+Safeway's coupon page can be found at [https://www.safeway.com/foru/coupons-deals.html](https://www.safeway.com/foru/coupons-deals.html). I'd recommend using [kton's Safeway-Just-for-u](https://github.com/kton/Safeway-Just-for-u) bookmarklet.
