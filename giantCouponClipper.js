@@ -10,6 +10,10 @@
 
 const appName = `Giant Grocery Coupon Auto Clipper`;
 
+// The maximum amount of time we will delay before clipping a coupon.
+// This is to avoid sending too many requests at once
+const maxDelayLengthInSeconds = 25;
+
 /**
  * Gets the current user's UserId.
  * Might be stored somewhere locally but we'll just get it from the server.
@@ -76,7 +80,7 @@ function clipCoupon(coupon, userId) {
           // }
           // return "Done";
         });
-    }, Math.random() * 1000 * 3);
+    }, Math.random() * 1000 * maxDelayLengthInSeconds);
   });
 }
 
@@ -132,4 +136,4 @@ async function main() {
   });
 }
 
-await main();
+main();
